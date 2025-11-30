@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Introduce Yourself – Speaking Activity (A2)</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#11998e,#38ef7d);min-height:100vh;padding:20px}
+        .container{max-width:750px;margin:0 auto}
+        .header{text-align:center;color:#fff;padding:20px}
+        .header h1{font-size:1.8rem;margin-bottom:5px;text-shadow:2px 2px 4px rgba(0,0,0,.2)}
+        .header p{opacity:.9;font-size:1rem}
+        .badge{background:rgba(255,255,255,.2);padding:6px 16px;border-radius:20px;font-size:.85rem;display:inline-block;margin-top:10px}
+        .card{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 15px 50px rgba(0,0,0,.25);margin-bottom:20px}
+        .section{padding:28px}
+        .section+.section{border-top:1px solid #eee}
+        .step{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+        .step-num{width:34px;height:34px;background:linear-gradient(135deg,#11998e,#38ef7d);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.95rem}
+        .step-title{font-size:1.15rem;color:#333;font-weight:600}
+        
+        /* VIDEO */
+        .video-container{position:relative;width:100%;padding-bottom:56.25%;border-radius:12px;overflow:hidden;box-shadow:0 8px 25px rgba(0,0,0,.15);background:#000}
+        .video-container iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none}
+        .video-tip{text-align:center;margin-top:14px;color:#666;font-size:.9rem}
+        
+        /* EXAMPLES */
+        .intro-text{color:#555;line-height:1.7;margin-bottom:18px}
+        .example-card{background:linear-gradient(135deg,#e8f5e9,#c8e6c9);border-radius:12px;padding:20px;margin-bottom:15px;border-left:4px solid #4caf50}
+        .example-title{font-size:.9rem;color:#2e7d32;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+        .example-text{color:#1b5e20;font-size:1.05rem;line-height:1.8}
+        .example-text span{display:block;margin:5px 0}
+        .highlight{background:#fff9c4;padding:2px 6px;border-radius:4px;font-weight:500}
+        
+        .phrases-box{background:#fff8e1;border-radius:10px;padding:18px;margin-top:18px;border-left:4px solid #ffc107}
+        .phrases-title{font-size:.9rem;color:#f57f17;font-weight:600;margin-bottom:10px}
+        .phrase-item{display:flex;gap:8px;padding:8px 0;color:#795548;font-size:.95rem;border-bottom:1px solid rgba(0,0,0,.05)}
+        .phrase-item:last-child{border:none}
+        .phrase-en{font-weight:500;color:#5d4037}
+        .phrase-es{color:#8d6e63;font-style:italic;font-size:.9rem}
+        
+        /* RECORDING */
+        .rec-box{background:linear-gradient(135deg,#e3f2fd,#bbdefb);border-radius:12px;padding:25px;text-align:center}
+        .your-turn{background:#e8f5e9;border-radius:10px;padding:15px;margin-bottom:20px;text-align:left}
+        .your-turn-title{font-size:.9rem;color:#2e7d32;font-weight:600;margin-bottom:8px}
+        .your-turn-list{color:#1b5e20;font-size:.95rem;line-height:1.8}
+        .your-turn-list span{display:block}
+        
+        .rec-btn{display:inline-flex;align-items:center;gap:10px;padding:16px 38px;border:none;border-radius:50px;font-size:1.05rem;font-weight:600;cursor:pointer;transition:.3s;background:linear-gradient(135deg,#4caf50,#388e3c);color:#fff}
+        .rec-btn.recording{background:linear-gradient(135deg,#f44336,#c62828);animation:pulse 1.5s infinite}
+        .rec-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.2)}
+        @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(244,67,54,.4)}50%{box-shadow:0 0 0 12px rgba(244,67,54,0)}}
+        .status{margin-top:15px;font-size:.9rem;color:#555;min-height:20px}
+        .status.active{color:#c62828;font-weight:600}
+        .status.done{color:#388e3c;font-weight:600}
+        
+        .audio-box{margin-top:20px;display:none}
+        .audio-box.show{display:block}
+        .audio-box audio{width:100%;max-width:350px}
+        .audio-label{font-size:.85rem;color:#666;margin-bottom:8px}
+        
+        .trans-box{margin-top:25px;text-align:left;display:none}
+        .trans-box.show{display:block}
+        .trans-label{font-size:.95rem;color:#11998e;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+        .trans-text{width:100%;min-height:100px;padding:15px;border:2px solid #11998e;border-radius:10px;font-size:1rem;line-height:1.6;background:#fff;color:#333}
+        .trans-text.listening{border-color:#f44336;background:#fff5f5;animation:borderPulse 1s infinite}
+        @keyframes borderPulse{0%,100%{border-color:#f44336}50%{border-color:#ff8a80}}
+        .trans-text .interim{color:#999}
+        .trans-tip{margin-top:10px;font-size:.85rem;color:#888}
+        
+        .complete-box{margin-top:25px;display:none}
+        .complete-box.show{display:block}
+        .check-wrap{display:flex;align-items:center;justify-content:center;gap:10px;padding:14px;background:#e8f5e9;border:2px solid #4caf50;border-radius:10px;cursor:pointer}
+        .check-wrap input{width:20px;height:20px}
+        .check-wrap span{color:#2e7d32;font-weight:500}
+        .done-badge{margin-top:15px;padding:15px 25px;background:linear-gradient(135deg,#4caf50,#388e3c);color:#fff;border-radius:10px;font-weight:600;display:none}
+        .done-badge.show{display:inline-block}
+        
+        .browser-note{background:#e0f2f1;padding:12px;border-radius:8px;margin-bottom:20px;font-size:.85rem;color:#00695c;text-align:center}
+        
+        .footer{text-align:center;padding:15px;color:rgba(255,255,255,.7);font-size:.8rem}
+    </style>
+</head>
+<body>
+<div class="container">
+    <header class="header">
+        <h1>👋 Introduce Yourself</h1>
+        <p>Learn to present yourself in English</p>
+        <span class="badge">🎤 Speaking • Level A2</span>
+    </header>
+
+    <div class="card">
+        <!-- 1. VIDEO -->
+        <div class="section">
+            <div class="step">
+                <span class="step-num">1</span>
+                <h2 class="step-title">Watch the Video</h2>
+            </div>
+            <div class="video-container">
+                <iframe 
+                    src="https://www.youtube.com/embed/uaz4noojJL4?rel=0" 
+                    title="How to Introduce Yourself in English"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerpolicy="strict-origin-when-cross-origin"
+                    allowfullscreen>
+                </iframe>
+            </div>
+            <p class="video-tip">💡 Watch the video carefully and take notes!</p>
+        </div>
+
+        <!-- 2. EXAMPLES -->
+        <div class="section">
+            <div class="step">
+                <span class="step-num">2</span>
+                <h2 class="step-title">Learn from Examples</h2>
+            </div>
+            
+            <p class="intro-text">Here are examples of how to introduce yourself. Pay attention to the structure:</p>
+            
+            <div class="example-card">
+                <p class="example-title">👩 Example 1: Maria</p>
+                <div class="example-text">
+                    <span>Hi! <span class="highlight">My name is</span> Maria García.</span>
+                    <span><span class="highlight">I am</span> 22 years old.</span>
+                    <span><span class="highlight">I am from</span> Medellín, Colombia.</span>
+                    <span><span class="highlight">My phone number is</span> 3 - 1 - 2 - 4 - 5 - 6 - 7 - 8 - 9 - 0.</span>
+                    <span>Nice to meet you!</span>
+                </div>
+            </div>
+            
+            <div class="example-card">
+                <p class="example-title">👨 Example 2: Carlos</p>
+                <div class="example-text">
+                    <span>Hello! <span class="highlight">My name is</span> Carlos Rodríguez.</span>
+                    <span><span class="highlight">I'm</span> 19 years old.</span>
+                    <span><span class="highlight">I'm from</span> Bogotá, Colombia.</span>
+                    <span><span class="highlight">You can reach me at</span> 3 - 0 - 0 - 1 - 2 - 3 - 4 - 5 - 6 - 7.</span>
+                    <span>It's a pleasure to meet you!</span>
+                </div>
+            </div>
+
+            <div class="phrases-box">
+                <p class="phrases-title">📚 Useful Phrases / Frases Útiles:</p>
+                <div class="phrase-item">
+                    <span class="phrase-en">My name is... / I'm...</span>
+                    <span class="phrase-es">→ Mi nombre es... / Soy...</span>
+                </div>
+                <div class="phrase-item">
+                    <span class="phrase-en">I am __ years old</span>
+                    <span class="phrase-es">→ Tengo __ años</span>
+                </div>
+                <div class="phrase-item">
+                    <span class="phrase-en">I am from...</span>
+                    <span class="phrase-es">→ Soy de...</span>
+                </div>
+                <div class="phrase-item">
+                    <span class="phrase-en">My phone number is...</span>
+                    <span class="phrase-es">→ Mi número de teléfono es...</span>
+                </div>
+                <div class="phrase-item">
+                    <span class="phrase-en">Nice to meet you!</span>
+                    <span class="phrase-es">→ ¡Mucho gusto!</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. RECORD -->
+        <div class="section">
+            <div class="step">
+                <span class="step-num">3</span>
+                <h2 class="step-title">Now It's Your Turn!</h2>
+            </div>
+            
+            <div class="browser-note" id="browserNote">
+                🌐 Use <b>Google Chrome</b> for best transcription results
+            </div>
+            
+            <div class="rec-box">
+                <div class="your-turn">
+                    <p class="your-turn-title">🎯 Record yourself saying:</p>
+                    <div class="your-turn-list">
+                        <span>1️⃣ Your name</span>
+                        <span>2️⃣ Your age</span>
+                        <span>3️⃣ Where you are from</span>
+                        <span>4️⃣ Your phone number (say each digit)</span>
+                        <span>5️⃣ A greeting (Nice to meet you!)</span>
+                    </div>
+                </div>
+                
+                <button class="rec-btn" id="recBtn">🎙️ Start Recording</button>
+                <p class="status" id="status">Click the button and introduce yourself!</p>
+                
+                <div class="audio-box" id="audioBox">
+                    <p class="audio-label">🔊 Your recording:</p>
+                    <audio id="audio" controls></audio>
+                </div>
+
+                <div class="trans-box" id="transBox">
+                    <p class="trans-label">📝 What you said:</p>
+                    <div class="trans-text" id="transText">Your introduction will appear here...</div>
+                    <p class="trans-tip">💡 Check if you included: name, age, city, and phone number!</p>
+                </div>
+
+                <div class="complete-box" id="completeBox">
+                    <label class="check-wrap">
+                        <input type="checkbox" id="checkDone">
+                        <span>I completed my introduction ✓</span>
+                    </label>
+                    <div class="done-badge" id="doneBadge">🎉 Great Job! Activity Completed!</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">English A2 • Speaking Practice</footer>
+</div>
+
+<script>
+(function() {
+    const recBtn = document.getElementById('recBtn');
+    const status = document.getElementById('status');
+    const audioBox = document.getElementById('audioBox');
+    const audio = document.getElementById('audio');
+    const transBox = document.getElementById('transBox');
+    const transText = document.getElementById('transText');
+    const completeBox = document.getElementById('completeBox');
+    const checkDone = document.getElementById('checkDone');
+    const doneBadge = document.getElementById('doneBadge');
+    const browserNote = document.getElementById('browserNote');
+
+    let isRecording = false;
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let mediaStream = null;
+    let recognition = null;
+    let finalTranscript = '';
+
+    // Check browser
+    const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+    if (isChrome) browserNote.style.display = 'none';
+
+    // Setup Speech Recognition
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    
+    if (SpeechRecognition) {
+        recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+        recognition.maxAlternatives = 1;
+
+        recognition.onstart = function() {
+            transText.classList.add('listening');
+        };
+
+        recognition.onresult = function(event) {
+            let interimTranscript = '';
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                const transcript = event.results[i][0].transcript;
+                if (event.results[i].isFinal) {
+                    finalTranscript += transcript + ' ';
+                } else {
+                    interimTranscript += transcript;
+                }
+            }
+            if (finalTranscript || interimTranscript) {
+                transText.innerHTML = finalTranscript + '<span class="interim">' + interimTranscript + '</span>';
+            }
+        };
+
+        recognition.onerror = function(event) {
+            if (event.error === 'no-speech' && isRecording) {
+                try { recognition.start(); } catch(e) {}
+            }
+        };
+
+        recognition.onend = function() {
+            transText.classList.remove('listening');
+            if (isRecording) {
+                try { recognition.start(); } catch(e) {}
+            }
+        };
+    }
+
+    recBtn.addEventListener('click', async function() {
+        if (!isRecording) {
+            await startRecording();
+        } else {
+            stopRecording();
+        }
+    });
+
+    async function startRecording() {
+        try {
+            if (!mediaStream) {
+                mediaStream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: { echoCancellation: true, noiseSuppression: true }
+                });
+            }
+
+            audioChunks = [];
+            mediaRecorder = new MediaRecorder(mediaStream);
+            
+            mediaRecorder.ondataavailable = function(event) {
+                if (event.data.size > 0) audioChunks.push(event.data);
+            };
+
+            mediaRecorder.onstop = function() {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                audio.src = URL.createObjectURL(audioBlob);
+                audioBox.classList.add('show');
+                completeBox.classList.add('show');
+            };
+
+            mediaRecorder.start(100);
+            isRecording = true;
+
+            if (recognition) {
+                finalTranscript = '';
+                transText.innerHTML = '<span class="interim">Listening... introduce yourself!</span>';
+                transBox.classList.add('show');
+                try { recognition.start(); } catch(e) {}
+            } else {
+                transBox.classList.add('show');
+                transText.textContent = 'Speech recognition not available in this browser.';
+            }
+
+            recBtn.classList.add('recording');
+            recBtn.innerHTML = '⏹️ Stop Recording';
+            status.textContent = '🔴 Recording... speak clearly!';
+            status.className = 'status active';
+
+        } catch (err) {
+            status.textContent = '❌ Microphone access denied. Please allow and refresh.';
+        }
+    }
+
+    function stopRecording() {
+        isRecording = false;
+
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            mediaRecorder.stop();
+        }
+
+        if (recognition) {
+            try { recognition.stop(); } catch(e) {}
+        }
+
+        transText.classList.remove('listening');
+        if (!finalTranscript.trim()) {
+            transText.textContent = 'No speech detected. Try again and speak louder!';
+        } else {
+            transText.textContent = finalTranscript.trim();
+        }
+
+        recBtn.classList.remove('recording');
+        recBtn.innerHTML = '🎙️ Record Again';
+        status.textContent = '✅ Recording saved!';
+        status.className = 'status done';
+    }
+
+    checkDone.addEventListener('change', function() {
+        doneBadge.classList.toggle('show', this.checked);
+    });
+})();
+</script>
+</body>
+</html>
