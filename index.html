@@ -48,11 +48,13 @@
         
         .rec-btn{display:inline-flex;align-items:center;gap:10px;padding:16px 38px;border:none;border-radius:50px;font-size:1.05rem;font-weight:600;cursor:pointer;transition:.3s;background:linear-gradient(135deg,#4caf50,#388e3c);color:#fff}
         .rec-btn.recording{background:linear-gradient(135deg,#f44336,#c62828);animation:pulse 1.5s infinite}
-        .rec-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.2)}
+        .rec-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.2)}
+        .rec-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
         @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(244,67,54,.4)}50%{box-shadow:0 0 0 12px rgba(244,67,54,0)}}
         .status{margin-top:15px;font-size:.9rem;color:#555;min-height:20px}
         .status.active{color:#c62828;font-weight:600}
         .status.done{color:#388e3c;font-weight:600}
+        .status.processing{color:#1976d2;font-weight:600}
         
         .audio-box{margin-top:20px;display:none}
         .audio-box.show{display:block}
@@ -62,23 +64,28 @@
         .trans-box{margin-top:25px;text-align:left;display:none}
         .trans-box.show{display:block}
         .trans-label{font-size:.95rem;color:#11998e;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px}
-        .trans-text{width:100%;min-height:100px;padding:15px;border:2px solid #11998e;border-radius:10px;font-size:1rem;line-height:1.6;background:#fff;color:#333}
-        .trans-text.listening{border-color:#f44336;background:#fff5f5;animation:borderPulse 1s infinite}
-        @keyframes borderPulse{0%,100%{border-color:#f44336}50%{border-color:#ff8a80}}
-        .trans-text .interim{color:#999}
+        .trans-text{width:100%;min-height:100px;padding:15px;border:2px solid #11998e;border-radius:10px;font-size:1rem;line-height:1.6;background:#fff;color:#333;white-space:pre-wrap}
+        .trans-text.processing{background:#f0f4ff;border-style:dashed}
         .trans-tip{margin-top:10px;font-size:.85rem;color:#888}
         
         .complete-box{margin-top:25px;display:none}
         .complete-box.show{display:block}
         .check-wrap{display:flex;align-items:center;justify-content:center;gap:10px;padding:14px;background:#e8f5e9;border:2px solid #4caf50;border-radius:10px;cursor:pointer}
-        .check-wrap input{width:20px;height:20px}
+        .check-wrap:hover{background:#c8e6c9}
+        .check-wrap input{width:20px;height:20px;cursor:pointer}
         .check-wrap span{color:#2e7d32;font-weight:500}
         .done-badge{margin-top:15px;padding:15px 25px;background:linear-gradient(135deg,#4caf50,#388e3c);color:#fff;border-radius:10px;font-weight:600;display:none}
         .done-badge.show{display:inline-block}
         
-        .browser-note{background:#e0f2f1;padding:12px;border-radius:8px;margin-bottom:20px;font-size:.85rem;color:#00695c;text-align:center}
+        .spinner{display:inline-block;width:16px;height:16px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite}
+        @keyframes spin{to{transform:rotate(360deg)}}
         
         .footer{text-align:center;padding:15px;color:rgba(255,255,255,.7);font-size:.8rem}
+        
+        @media(max-width:600px){
+            .section{padding:20px}
+            .header h1{font-size:1.4rem}
+        }
     </style>
 </head>
 <body>
@@ -86,7 +93,7 @@
     <header class="header">
         <h1>👋 Introduce Yourself</h1>
         <p>Learn to present yourself in English</p>
-        <span class="badge">🎤 Speaking • Level A2</span>
+        <span class="badge">🎤 Speaking • Level A2 • Universal</span>
     </header>
 
     <div class="card">
@@ -171,10 +178,6 @@
                 <h2 class="step-title">Now It's Your Turn!</h2>
             </div>
             
-            <div class="browser-note" id="browserNote">
-                🌐 Use <b>Google Chrome</b> for best transcription results
-            </div>
-            
             <div class="rec-box">
                 <div class="your-turn">
                     <p class="your-turn-title">🎯 Record yourself saying:</p>
@@ -187,7 +190,7 @@
                     </div>
                 </div>
                 
-                <button class="rec-btn" id="recBtn">🎙️ Start Recording</button>
+                <button class="rec-btn" id="recBtn">🎙️ <span id="recTxt">Start Recording</span></button>
                 <p class="status" id="status">Click the button and introduce yourself!</p>
                 
                 <div class="audio-box" id="audioBox">
@@ -212,12 +215,16 @@
         </div>
     </div>
 
-    <footer class="footer">English A2 • Speaking Practice</footer>
+    <footer class="footer">English A2 • Speaking Practice • Powered by AI Transcription</footer>
 </div>
 
 <script>
 (function() {
+    // URL del backend en Vercel
+    const API_URL = 'https://speaking-api-81bp.vercel.app/api/transcribe';
+    
     const recBtn = document.getElementById('recBtn');
+    const recTxt = document.getElementById('recTxt');
     const status = document.getElementById('status');
     const audioBox = document.getElementById('audioBox');
     const audio = document.getElementById('audio');
@@ -226,137 +233,120 @@
     const completeBox = document.getElementById('completeBox');
     const checkDone = document.getElementById('checkDone');
     const doneBadge = document.getElementById('doneBadge');
-    const browserNote = document.getElementById('browserNote');
 
     let isRecording = false;
     let mediaRecorder = null;
     let audioChunks = [];
-    let mediaStream = null;
-    let recognition = null;
-    let finalTranscript = '';
+    let stream = null;
 
-    // Check browser
-    const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
-    if (isChrome) browserNote.style.display = 'none';
+    recBtn.onclick = async function() {
+        if (!isRecording) {
+            try {
+                if (!stream) {
+                    stream = await navigator.mediaDevices.getUserMedia({audio: true});
+                }
 
-    // Setup Speech Recognition
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    
-    if (SpeechRecognition) {
-        recognition = new SpeechRecognition();
-        recognition.continuous = true;
-        recognition.interimResults = true;
-        recognition.lang = 'en-US';
-        recognition.maxAlternatives = 1;
+                audioChunks = [];
+                
+                let mimeType = '';
+                if (MediaRecorder.isTypeSupported('audio/mp4')) {
+                    mimeType = 'audio/mp4';
+                } else if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+                    mimeType = 'audio/webm;codecs=opus';
+                } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+                    mimeType = 'audio/webm';
+                }
 
-        recognition.onstart = function() {
-            transText.classList.add('listening');
-        };
+                mediaRecorder = mimeType ? 
+                    new MediaRecorder(stream, { mimeType }) : 
+                    new MediaRecorder(stream);
+                
+                mediaRecorder.ondataavailable = function(e) {
+                    if (e.data.size > 0) audioChunks.push(e.data);
+                };
 
-        recognition.onresult = function(event) {
-            let interimTranscript = '';
-            for (let i = event.resultIndex; i < event.results.length; i++) {
-                const transcript = event.results[i][0].transcript;
-                if (event.results[i].isFinal) {
-                    finalTranscript += transcript + ' ';
+                mediaRecorder.onstop = async function() {
+                    const blob = new Blob(audioChunks, {type: mimeType || 'audio/webm'});
+                    const url = URL.createObjectURL(blob);
+                    audio.src = url;
+                    audioBox.classList.add('show');
+                    
+                    await transcribeAudio(blob);
+                };
+
+                mediaRecorder.start(200);
+                isRecording = true;
+
+                recBtn.classList.add('recording');
+                recTxt.textContent = 'Stop Recording';
+                status.textContent = '🔴 Recording... introduce yourself!';
+                status.className = 'status active';
+
+            } catch(err) {
+                console.error('Mic error:', err);
+                if (err.name === 'NotAllowedError') {
+                    status.textContent = '❌ Please allow microphone access';
+                } else if (err.name === 'NotFoundError') {
+                    status.textContent = '❌ No microphone found';
                 } else {
-                    interimTranscript += transcript;
+                    status.textContent = '❌ Could not start recording';
                 }
             }
-            if (finalTranscript || interimTranscript) {
-                transText.innerHTML = finalTranscript + '<span class="interim">' + interimTranscript + '</span>';
-            }
-        };
-
-        recognition.onerror = function(event) {
-            if (event.error === 'no-speech' && isRecording) {
-                try { recognition.start(); } catch(e) {}
-            }
-        };
-
-        recognition.onend = function() {
-            transText.classList.remove('listening');
-            if (isRecording) {
-                try { recognition.start(); } catch(e) {}
-            }
-        };
-    }
-
-    recBtn.addEventListener('click', async function() {
-        if (!isRecording) {
-            await startRecording();
         } else {
-            stopRecording();
-        }
-    });
+            isRecording = false;
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
 
-    async function startRecording() {
+            recBtn.classList.remove('recording');
+            recBtn.disabled = true;
+            recTxt.innerHTML = '<span class="spinner"></span> Processing...';
+            status.textContent = '⏳ Transcribing your audio...';
+            status.className = 'status processing';
+        }
+    };
+
+    async function transcribeAudio(blob) {
+        transBox.classList.add('show');
+        transText.classList.add('processing');
+        transText.textContent = 'Sending audio to transcription service...';
+
         try {
-            if (!mediaStream) {
-                mediaStream = await navigator.mediaDevices.getUserMedia({ 
-                    audio: { echoCancellation: true, noiseSuppression: true }
-                });
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/octet-stream'
+                },
+                body: blob
+            });
+
+            if (!response.ok) {
+                throw new Error(`Server error: ${response.status}`);
             }
 
-            audioChunks = [];
-            mediaRecorder = new MediaRecorder(mediaStream);
-            
-            mediaRecorder.ondataavailable = function(event) {
-                if (event.data.size > 0) audioChunks.push(event.data);
-            };
+            const data = await response.json();
 
-            mediaRecorder.onstop = function() {
-                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                audio.src = URL.createObjectURL(audioBlob);
-                audioBox.classList.add('show');
+            transText.classList.remove('processing');
+
+            if (data.success && data.text) {
+                transText.textContent = data.text;
+                status.textContent = '✅ Transcription complete!';
+                status.className = 'status done';
                 completeBox.classList.add('show');
-            };
-
-            mediaRecorder.start(100);
-            isRecording = true;
-
-            if (recognition) {
-                finalTranscript = '';
-                transText.innerHTML = '<span class="interim">Listening... introduce yourself!</span>';
-                transBox.classList.add('show');
-                try { recognition.start(); } catch(e) {}
             } else {
-                transBox.classList.add('show');
-                transText.textContent = 'Speech recognition not available in this browser.';
+                throw new Error(data.error || 'Transcription failed');
             }
 
-            recBtn.classList.add('recording');
-            recBtn.innerHTML = '⏹️ Stop Recording';
-            status.textContent = '🔴 Recording... speak clearly!';
-            status.className = 'status active';
-
-        } catch (err) {
-            status.textContent = '❌ Microphone access denied. Please allow and refresh.';
+        } catch(err) {
+            console.error('Transcription error:', err);
+            transText.classList.remove('processing');
+            transText.textContent = '⚠️ Could not transcribe audio. Please try again or check your internet connection.';
+            status.textContent = '❌ Transcription failed';
+            status.className = 'status';
+        } finally {
+            recBtn.disabled = false;
+            recTxt.textContent = 'Record Again';
         }
-    }
-
-    function stopRecording() {
-        isRecording = false;
-
-        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-            mediaRecorder.stop();
-        }
-
-        if (recognition) {
-            try { recognition.stop(); } catch(e) {}
-        }
-
-        transText.classList.remove('listening');
-        if (!finalTranscript.trim()) {
-            transText.textContent = 'No speech detected. Try again and speak louder!';
-        } else {
-            transText.textContent = finalTranscript.trim();
-        }
-
-        recBtn.classList.remove('recording');
-        recBtn.innerHTML = '🎙️ Record Again';
-        status.textContent = '✅ Recording saved!';
-        status.className = 'status done';
     }
 
     checkDone.addEventListener('change', function() {
